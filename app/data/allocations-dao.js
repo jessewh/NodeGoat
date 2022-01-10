@@ -59,7 +59,7 @@ const AllocationsDAO = function(db){
 
         const searchCriteria = () => {
 
-            if (threshold) {
+            if (threshold && typeof threshold === number && threshold <= 99 && threshold >=0) {
                 /*
                 // Fix for A1 - 2 NoSQL Injection - escape the threshold parameter properly
                 // Fix this NoSQL Injection which doesn't sanitze the input parameter 'threshold' and allows attackers

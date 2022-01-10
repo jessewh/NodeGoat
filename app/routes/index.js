@@ -95,6 +95,8 @@ const index = (app, db) => {
 
     // Error handling middleware
     app.use(ErrorHandler);
+
+    
 };
 
 module.exports = index;

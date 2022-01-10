@@ -1,4 +1,4 @@
-const bcrypt = require("bcrypt-nodejs");
+const bcrypt = require("bcryptjs");
 
 /* The UserDAO must be constructed with a connected database object */
 function UserDAO(db) {
@@ -14,7 +14,10 @@ function UserDAO(db) {
 
     const usersCol = db.collection("users");
 
-    this.addUser = (userName, firstName, lastName, password, email, callback) => {
+    this.addUser = async (userName, firstName, lastName, password, email, callback) => {
+        const salt = await bcrypt.genSalt(10);
+        const hashedPassword = await bcrypt.hash(password, salt);
+
 
         // Create user document
         const user = {
@@ -22,11 +25,11 @@ function UserDAO(db) {
             firstName,
             lastName,
             benefitStartDate: this.getRandomFutureDate(),
-            password //received from request param
+            password: hashedPassword
+            //password //received from request param
             /*
             // Fix for A2-1 - Broken Auth
             // Stores password  in a safer way using one way encryption and salt hashing
-            password: bcrypt.hashSync(password, bcrypt.genSaltSync())
             */
         };
 
@@ -57,22 +60,29 @@ function UserDAO(db) {
     this.validateLogin = (userName, password, callback) => {
 
         // Helper function to compare passwords
-        const comparePassword = (fromDB, fromUser) => {
-            return fromDB === fromUser;
+        const comparePassword = async (fromDB, fromUser) => {
             /*
-            // Fix for A2-Broken Auth
+            // Fix for A2-Broken Authf
             // compares decrypted password stored in this.addUser()
-            return bcrypt.compareSync(fromDB, fromUser);
             */
+            const isMatch = await bcrypt.compare(fromDB, fromUser);
+            return isMatch;
+        //    if (bcrypt.compareSync(password, user.password)) {
+        //        callback(null, user);
+        //     } else {
+        //         callback(invalidPasswordError, null);
+        //     }
+        //     return fromDB === fromUser;f
         }
 
         // Callback to pass to MongoDB that validates a user document
-        const validateUserDoc = (err, user) => {
+        const validateUserDoc = async (err, user) => {
 
             if (err) return callback(err, null);
 
             if (user) {
-                if (comparePassword(password, user.password)) {
+                const isMatch = await comparePassword(password, user.password);
+                if (isMatch) {
                     callback(null, user);
                 } else {
                     const invalidPasswordError = new Error("Invalid password");
